@@ -49,7 +49,7 @@ model.classifier = nn.Sequential(
 
 #Load the fine-tuned weights
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-checkpoint = torch.load('/mnt/storage/MACE_extraction/src/image_classification/dense_net_train/dense_net_train-04/best.pth.tar',
+checkpoint = torch.load('DenseNet121.tar',
                         map_location=device)
 if torch.cuda.device_count() > 1:
     print("Using multiple GPUs")
