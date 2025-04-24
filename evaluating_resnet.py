@@ -72,7 +72,7 @@ model = model.to(device)
 model.eval()
 
 
-#Load test set
+#Evaluate on test set
 test_images = pd.read_csv('test set')
 
 class CXRDataset(Dataset):
@@ -86,9 +86,8 @@ class CXRDataset(Dataset):
     def image_loader(self, image_name):
         image = io.imread(image_name)
         image = (((image - image.min()) / (image.max() - image.min()))*255).astype(np.uint8)
-        image = np.stack((image, )*3)
-        image = np.transpose(image, (1, 2, 0))
         image = self.augmentations(image)
+        image = image.float()
         return image
     
     def __getitem__(self, index):
@@ -96,14 +95,14 @@ class CXRDataset(Dataset):
         x = self.image_loader(self.df.at[self.df.index[index], 'image_paths'])
         y = torch.tensor([y], dtype=torch.float)
         return x, y
-
-
-#Extract probabilities
+    
 other_transform = transforms.Compose([
                                     transforms.ToPILImage(),
-                                    transforms.Resize((256,256)),
+                                    transforms.Resize((512,512)),
+                                    transforms.CenterCrop(512),
+                                    transforms.Grayscale(num_output_channels=1),
                                     transforms.ToTensor(),
-                                    transforms.Normalize(mean=[0.4756, 0.4756, 0.4756], std=[0.3011, 0.3011, 0.3011])
+                                    transforms.Normalize(mean=[0.4756], std=[0.3011])
                                     ])
 datagen_test = CXRDataset(df = test_images.copy(),augmentations = other_transform)
 test_loader = DataLoader(dataset=datagen_test,  shuffle=False, batch_size=8, num_workers=4)
@@ -121,7 +120,7 @@ flattened_probs = np.concatenate(all_probabilities, axis=0)
 test_images['predicted_probability'] = flattened_probs
 
 
-#ROC Curve
+#ROC Curve on Test Set
 output = test_images['predicted_probability']
 fpr, tpr, thresholds = roc_curve(test_images['MACE_labels'],output) 
 roc_auc = auc(fpr, tpr)
@@ -136,9 +135,10 @@ plt.ylabel('True Positive Rate')
 plt.title('ROC Curve')
 plt.legend()
 
-plt.savefig("roc_curve_testset.png", dpi=300, bbox_inches='tight')
-print("ROC curve for testset saved")
+save_path = os.path.join(save_dir, "roc_curve_testset.png")
+plt.savefig(save_path, dpi=300, bbox_inches='tight')
 
+print("ROC curve for testset saved")
 
 #Final model predictions for test set
 optimal_idx = np.argmax(tpr - fpr)
@@ -154,8 +154,7 @@ for num in test_images['predicted_probability']:
 
 test_images['model_predictions'] = preds
 
-
-#Additional metrics
+#Additional metrics for testset
 y_true = test_images['MACE_labels']
 y_pred = test_images['model_predictions']
 
@@ -163,7 +162,8 @@ cm = confusion_matrix(y_true,y_pred)
 disp = ConfusionMatrixDisplay(confusion_matrix=cm)
 fig, ax = plt.subplots()
 disp.plot(ax=ax)
-plt.savefig("confusion_matrix_testset.png", dpi=300, bbox_inches='tight')
+save_path = os.path.join(save_dir, "confusion_matrix_testset.png")
+plt.savefig(save_path, dpi=300, bbox_inches='tight')
 
 tn, fp, fn, tp = cm.ravel()
 accuracy = accuracy_score(y_true, y_pred)
