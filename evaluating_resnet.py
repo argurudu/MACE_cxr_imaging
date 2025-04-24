@@ -62,7 +62,7 @@ model.op_threshs = None
 
 #Load the fine-tuned weights
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
-checkpoint = torch.load('DenseNet121.tar',
+checkpoint = torch.load('ResNet50.tar',
                         map_location=device)
 if torch.cuda.device_count() > 1:
     print("Using multiple GPUs")
