@@ -123,8 +123,7 @@ plt.ylabel('True Positive Rate')
 plt.title('ROC Curve')
 plt.legend()
 
-save_path = os.path.join(save_dir, "roc_curve_testset.png")
-plt.savefig(save_path, dpi=300, bbox_inches='tight')
+plt.savefig("roc_curve_testset.png", dpi=300, bbox_inches='tight')
 print("ROC curve for testset saved")
 
 #Final model predictions for test set
@@ -150,8 +149,7 @@ cm = confusion_matrix(y_true,y_pred)
 disp = ConfusionMatrixDisplay(confusion_matrix=cm)
 fig, ax = plt.subplots()
 disp.plot(ax=ax)
-save_path = os.path.join(save_dir, "confusion_matrix_testset.png")
-plt.savefig(save_path, dpi=300, bbox_inches='tight')
+plt.savefig("confusion_matrix_testset.png", dpi=300, bbox_inches='tight')
 
 tn, fp, fn, tp = cm.ravel()
 accuracy = accuracy_score(y_true, y_pred)
